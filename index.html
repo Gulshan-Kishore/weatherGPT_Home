@@ -1,0 +1,739 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>WeatherGPT</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one living landscape behind the whole page. A fixed sky, sun, clouds, birds, leaves and hills stay in place
+   while frosted content panels scroll over them. Scrolling moves the sun and turns day into sunset (dark theme: dusk into night). */
+:root {
+  --bg: #cfe8f6;
+  --panel: rgba(255, 255, 255, 0.8);
+  --panel-line: rgba(255, 255, 255, 0.9);
+  --tint: #e8f3e6;
+  --surface: #ffffff;
+  --ink: #12302b;
+  --muted: #46605a;
+  --line: #cfe0d0;
+  --leaf: #1f7a4a;
+  --sun: #ff9f1c;
+  --on-sun: #2b1700;
+  --forest: #1d5a3a;
+  --on-forest: #e7f3ea;
+  --step-bg: #ffe3a8;
+  --shadow: 0 14px 34px -16px rgba(18, 48, 43, 0.35);
+  --nav-bg: rgba(255, 255, 255, 0.66);
+  --nav-solid: #e3f1fa;
+
+  --hero-ink: #0b2a3c;
+  --hero-muted: #17394f;
+  --sky-a-top: #67b6e8; --sky-a-mid: #a9dcf3; --sky-a-low: #fff0cf;
+  --sky-b-top: #3d5b9c; --sky-b-mid: #e58f6b; --sky-b-low: #ffd39a;
+  --stars: none;
+  --cloud: #ffffff; --cloud-op: 0.95; --cloud-shadow: rgba(40, 90, 140, 0.16);
+  --hill-far: #a3d6b0; --hill-mid: #5fb88a; --hill-near: #d3ebd2; --tree: #4fa377;
+  --glass: rgba(255, 255, 255, 0.6); --glass-line: rgba(255, 255, 255, 0.75);
+
+  --sun-core: #fff4b8; --sun-edge: #ffc22e;
+  --sun-glow: rgba(255, 200, 60, 0.55); --sun-glow2: rgba(255, 224, 130, 0.35); --ray: rgba(255, 214, 90, 0.5);
+  --sun-size: clamp(96px, 13vw, 168px);
+  --a-x0: 64vw; --a-y0: 40px; --a-x1: 84vw; --a-y1: 30vh; --a-x2: 78vw; --a-y2: 66vh;
+
+  --lf-d: inline; --ff-d: none; --fall-dir: normal; --fall: #5fb88a;
+
+  --tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 90'%3E%3Crect x='0' y='84' width='340' height='6'/%3E%3Cpath d='M30 12L48 44H40L54 68H44L58 90H2L16 68H6L20 44H12Z'/%3E%3Ccircle cx='100' cy='52' r='24'/%3E%3Ccircle cx='86' cy='64' r='18'/%3E%3Ccircle cx='114' cy='64' r='18'/%3E%3Crect x='97' y='70' width='6' height='20'/%3E%3Cpath d='M165 26L179 52H172L184 72H176L188 90H142L154 72H146L158 52H151Z'/%3E%3Cpath d='M230 8L250 42H241L257 70H246L262 90H198L214 70H203L219 42H210Z'/%3E%3Ccircle cx='300' cy='58' r='20'/%3E%3Ccircle cx='288' cy='70' r='16'/%3E%3Ccircle cx='312' cy='70' r='16'/%3E%3Crect x='297' y='72' width='6' height='18'/%3E%3C/svg%3E");
+
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1328; --panel: rgba(12, 28, 26, 0.8); --panel-line: rgba(255, 255, 255, 0.08);
+    --tint: #0f211d; --surface: #132622; --ink: #e8f3ee; --muted: #a8c1b8; --line: #264540;
+    --leaf: #7bd6a0; --forest: #0a2a1f; --on-forest: #cfe6d8; --step-bg: #3a2a10;
+    --shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.7); --nav-bg: rgba(10, 22, 40, 0.62); --nav-solid: #0c1b33;
+    --hero-ink: #fff3e4; --hero-muted: #d8deee;
+    --sky-a-top: #0c1b33; --sky-a-mid: #35416f; --sky-a-low: #dc7a52;
+    --sky-b-top: #050a16; --sky-b-mid: #0e1a36; --sky-b-low: #2b2748;
+    --stars: radial-gradient(1.5px 1.5px at 12% 14%, #fff, transparent), radial-gradient(1.5px 1.5px at 27% 38%, #fff, transparent), radial-gradient(2px 2px at 41% 9%, #fff, transparent), radial-gradient(1.5px 1.5px at 58% 26%, #fff, transparent), radial-gradient(2px 2px at 73% 12%, #fff, transparent), radial-gradient(1.5px 1.5px at 86% 34%, #fff, transparent), radial-gradient(1.5px 1.5px at 93% 8%, #fff, transparent), radial-gradient(1.5px 1.5px at 6% 44%, #fff, transparent), radial-gradient(1.5px 1.5px at 66% 46%, #fff, transparent);
+    --cloud: #d9c5d9; --cloud-op: 0.3; --cloud-shadow: rgba(0, 0, 0, 0);
+    --hill-far: #253f4e; --hill-mid: #17332f; --hill-near: #0e231e; --tree: #10302a;
+    --glass: rgba(12, 24, 44, 0.5); --glass-line: rgba(255, 255, 255, 0.16);
+    --sun-core: #ffd8a0; --sun-edge: #ff8a3d; --sun-glow: rgba(255, 130, 60, 0.5); --sun-glow2: rgba(255, 110, 70, 0.28); --ray: rgba(255, 150, 80, 0.28);
+    --a-x0: 44vw; --a-y0: 56vh; --a-x1: 44vw; --a-y1: 64vh; --a-x2: 44vw; --a-y2: 74vh;
+    --lf-d: none; --ff-d: inline; --fall-dir: reverse; --fall: #ffd45e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1328; --panel: rgba(12, 28, 26, 0.8); --panel-line: rgba(255, 255, 255, 0.08);
+  --tint: #0f211d; --surface: #132622; --ink: #e8f3ee; --muted: #a8c1b8; --line: #264540;
+  --leaf: #7bd6a0; --forest: #0a2a1f; --on-forest: #cfe6d8; --step-bg: #3a2a10;
+  --shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.7); --nav-bg: rgba(10, 22, 40, 0.62); --nav-solid: #0c1b33;
+  --hero-ink: #fff3e4; --hero-muted: #d8deee;
+  --sky-a-top: #0c1b33; --sky-a-mid: #35416f; --sky-a-low: #dc7a52;
+  --sky-b-top: #050a16; --sky-b-mid: #0e1a36; --sky-b-low: #2b2748;
+  --stars: radial-gradient(1.5px 1.5px at 12% 14%, #fff, transparent), radial-gradient(1.5px 1.5px at 27% 38%, #fff, transparent), radial-gradient(2px 2px at 41% 9%, #fff, transparent), radial-gradient(1.5px 1.5px at 58% 26%, #fff, transparent), radial-gradient(2px 2px at 73% 12%, #fff, transparent), radial-gradient(1.5px 1.5px at 86% 34%, #fff, transparent), radial-gradient(1.5px 1.5px at 93% 8%, #fff, transparent), radial-gradient(1.5px 1.5px at 6% 44%, #fff, transparent), radial-gradient(1.5px 1.5px at 66% 46%, #fff, transparent);
+  --cloud: #d9c5d9; --cloud-op: 0.3; --cloud-shadow: rgba(0, 0, 0, 0);
+  --hill-far: #253f4e; --hill-mid: #17332f; --hill-near: #0e231e; --tree: #10302a;
+  --glass: rgba(12, 24, 44, 0.5); --glass-line: rgba(255, 255, 255, 0.16);
+  --sun-core: #ffd8a0; --sun-edge: #ff8a3d; --sun-glow: rgba(255, 130, 60, 0.5); --sun-glow2: rgba(255, 110, 70, 0.28); --ray: rgba(255, 150, 80, 0.28);
+  --a-x0: 44vw; --a-y0: 56vh; --a-x1: 44vw; --a-y1: 64vh; --a-x2: 44vw; --a-y2: 74vh;
+  --lf-d: none; --ff-d: inline; --fall-dir: reverse; --fall: #ffd45e;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 1.0625rem; line-height: 1.65;
+  margin: 0; overflow-x: clip;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--nav-solid); }
+.wrap {
+  max-width: 1152px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.05; margin: 0; text-wrap: balance; }
+h2 { font-size: clamp(1.8rem, 4.2vw, 2.6rem); font-weight: 800; letter-spacing: -0.02em; margin-top: 10px; }
+h3 { font-size: 1.2rem; font-weight: 600; line-height: 1.25; }
+p { margin: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--leaf); }
+
+/* ---------- fixed living scene ---------- */
+.scene { --hills-h: clamp(110px, 17vw, 230px); position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.sky-a, .sky-b { position: absolute; inset: 0; }
+.sky-a { background: linear-gradient(180deg, var(--sky-a-top) 0%, var(--sky-a-mid) 55%, var(--sky-a-low) 100%); }
+.sky-b { background: linear-gradient(180deg, var(--sky-b-top) 0%, var(--sky-b-mid) 55%, var(--sky-b-low) 100%); opacity: 0; }
+.sky-b::after { content: ""; position: absolute; inset: 0; background-image: var(--stars); }
+.sun {
+  position: absolute; left: 0; top: 0; width: var(--sun-size); aspect-ratio: 1; border-radius: 50%;
+  transform: translate(var(--a-x0), var(--a-y0));
+  background: radial-gradient(circle at 36% 34%, var(--sun-core), var(--sun-edge) 72%);
+  box-shadow: 0 0 50px 18px var(--sun-glow), 0 0 150px 60px var(--sun-glow2);
+  animation: pulse 7s ease-in-out infinite;
+}
+.rays {
+  position: absolute; inset: -90%; border-radius: 50%;
+  background: repeating-conic-gradient(var(--ray) 0 5deg, transparent 5deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 0 24%, #000 30%, transparent 68%);
+          mask-image: radial-gradient(circle, transparent 0 24%, #000 30%, transparent 68%);
+  animation: spin 100s linear infinite;
+}
+.cloud {
+  position: absolute; left: 0; top: var(--t); width: var(--w); aspect-ratio: 2 / 1;
+  color: var(--cloud); opacity: var(--cloud-op); filter: drop-shadow(0 8px 12px var(--cloud-shadow));
+  animation: drift var(--dur) linear infinite; animation-delay: var(--delay);
+}
+.bird { position: absolute; left: 0; top: var(--t); width: 92px; aspect-ratio: 12 / 5; animation: drift var(--dur) linear infinite; animation-delay: var(--delay); }
+.bird path { fill: none; stroke: var(--hero-ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.5; }
+.leaf { position: absolute; top: 0; left: var(--x); width: var(--s); height: var(--s); color: var(--fall); animation: fall var(--dur) linear infinite; animation-direction: var(--fall-dir); animation-delay: var(--delay); }
+.leaf .lf { display: var(--lf-d); }
+.leaf .ff { display: var(--ff-d); fill: var(--fall); }
+.leaf svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 6px var(--fall)); }
+.leaf .lf { filter: none; }
+
+.land { position: absolute; left: 0; right: 0; bottom: 0; height: var(--hills-h); }
+.hills { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 100%; display: block; }
+.hills.far { fill: var(--hill-far); }
+.hills.mid { fill: var(--hill-mid); }
+.hills.near { fill: var(--hill-near); }
+.trees { position: absolute; left: 0; right: 0; bottom: calc(var(--hills-h) * 0.34); height: clamp(48px, 7vw, 92px); background: var(--tree);
+  -webkit-mask-image: var(--tile); mask-image: var(--tile); -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x;
+  -webkit-mask-position: left bottom; mask-position: left bottom; -webkit-mask-size: auto 100%; mask-size: auto 100%; }
+
+@keyframes drift { from { transform: translateX(-380px); } to { transform: translateX(100vw); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.1); } }
+@keyframes fall {
+  0% { transform: translate(0, -12vh) rotate(0deg); }
+  25% { transform: translate(40px, 25vh) rotate(90deg); }
+  50% { transform: translate(-30px, 52vh) rotate(200deg); }
+  75% { transform: translate(30px, 80vh) rotate(290deg); }
+  100% { transform: translate(0, 112vh) rotate(380deg); }
+}
+@keyframes sun-arc {
+  from { transform: translate(var(--a-x0), var(--a-y0)); }
+  50% { transform: translate(var(--a-x1), var(--a-y1)); }
+  to { transform: translate(var(--a-x2), var(--a-y2)); }
+}
+@keyframes sky-fade { from { opacity: 0; } 35% { opacity: 0; } to { opacity: 1; } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes rise { from { opacity: 0.5; transform: translateY(34px); } to { opacity: 1; transform: none; } }
+
+@supports (animation-timeline: scroll()) {
+  .sun { animation-name: pulse, sun-arc; animation-duration: 7s, 1ms; animation-timing-function: ease-in-out, linear; animation-iteration-count: infinite, 1; animation-fill-mode: none, both; animation-timeline: auto, scroll(root); }
+  .sky-b { animation: sky-fade linear both; animation-timeline: scroll(root); }
+  .progress { animation: grow linear both; animation-timeline: scroll(root); }
+  .reveal { animation: rise linear backwards; animation-timeline: view(); animation-range: entry 0% entry 42%; }
+}
+
+/* ---------- page ---------- */
+.page { position: relative; z-index: 1; }
+.progress { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0px); height: 4px; z-index: 35; background: linear-gradient(90deg, #ffd25a, var(--sun), #ff6a3d); transform: scaleX(0); transform-origin: left; }
+
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--nav-bg); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); border-bottom: 1px solid var(--glass-line); }
+.nav-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 800; font-size: 1.2rem; text-decoration: none; letter-spacing: -0.01em; color: var(--hero-ink); }
+.brand::before { content: ""; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--sun-core), var(--sun-edge)); box-shadow: 0 0 12px 3px var(--sun-glow); }
+.nav nav { display: none; gap: 22px; font-size: 0.95rem; font-weight: 500; margin-left: auto; margin-right: 8px; }
+@media (min-width: 760px) { .nav nav { display: flex; } }
+.nav nav a { color: var(--hero-ink); text-decoration: none; opacity: 0.85; }
+.nav nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+
+.btn { display: inline-block; padding: 13px 24px; font-weight: 600; font-size: 1rem; text-decoration: none; border-radius: 999px; border: 2px solid var(--hero-ink); color: var(--hero-ink); transition: transform 0.2s, filter 0.2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn.primary { background: var(--sun); border-color: var(--sun); color: var(--on-sun); box-shadow: 0 10px 24px -10px var(--sun-glow); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { background: var(--glass); border-color: var(--glass-line); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.btn.sm { padding: 8px 18px; font-size: 0.92rem; }
+
+.hero { padding-block: 56px 72px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+@media (min-width: 960px) { .hero-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: center; gap: 56px; } }
+.hero .eyebrow { color: var(--hero-ink); opacity: 0.8; }
+h1 { font-size: clamp(3.3rem, 11vw, 6.6rem); font-weight: 800; letter-spacing: -0.04em; margin-top: 14px; color: var(--hero-ink); }
+.lede { font-size: 1.2rem; color: var(--hero-muted); max-width: 34em; margin-top: 22px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.pill { padding: 6px 14px; border-radius: 999px; font-size: 0.88rem; font-weight: 500; color: var(--hero-ink); background: var(--glass); border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.readout { margin-top: 26px; display: inline-flex; flex-direction: column; gap: 3px; padding: 14px 18px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); font-family: var(--f-mono); font-size: 0.82rem; color: var(--muted); max-width: 100%; }
+.readout b { color: var(--ink); font-weight: 500; }
+
+.shot { margin: 0; background: #0f1720; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.shot img { display: block; width: 100%; height: auto; cursor: zoom-in; transition: transform 0.5s ease; }
+.shot:hover img { transform: scale(1.025); }
+.hero .shot { box-shadow: 0 30px 60px -24px rgba(8, 24, 40, 0.6); border-color: rgba(255, 255, 255, 0.5); }
+figcaption { font-size: 0.88rem; color: var(--muted); padding: 10px 2px 0; }
+
+/* ---------- panels over the scene ---------- */
+main > .wrap { display: grid; gap: 28px; padding-bottom: 56px; }
+.panel { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 28px; padding: clamp(24px, 5vw, 56px); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: var(--shadow); scroll-margin-top: 84px; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+@media (min-width: 860px) { .split { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 56px; } }
+.prose { display: grid; gap: 18px; max-width: 40em; }
+.prose p { color: var(--muted); }
+.prose p strong { color: var(--ink); font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.card:hover { transform: translateY(-5px); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.chip { padding: 8px 15px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; font-size: 0.95rem; transition: transform 0.2s, border-color 0.2s; }
+.chip:hover { transform: translateY(-2px); border-color: var(--sun); }
+
+/* illustrated chat scene (own artwork, built from a real sample reply) */
+.art-wrap { margin: 0; display: flex; flex-direction: column; }
+.art { position: relative; flex: 1; min-height: 540px; overflow: hidden; border-radius: 22px; border: 1px solid var(--panel-line); box-shadow: var(--shadow);
+  background: linear-gradient(180deg, var(--sky-a-top), var(--sky-a-mid) 55%, var(--sky-a-low)); display: grid; align-content: center; padding: clamp(18px, 4vw, 36px); }
+.art-bg { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--cloud); }
+.art-bg .a-glow { fill: var(--sun-glow); }
+.art-bg .a-sun { fill: var(--sun-edge); }
+.art-bg .a-cloud { opacity: var(--cloud-op); }
+.art-bg .a-h1 { fill: var(--hill-far); }
+.art-bg .a-h2 { fill: var(--hill-mid); }
+.art-bg .a-tree { fill: var(--tree); }
+.chat { position: relative; display: grid; gap: 14px; max-width: 460px; width: 100%; margin-inline: auto; }
+.msg { border-radius: 18px; padding: 14px 18px; font-size: 1rem; line-height: 1.5; }
+.who { display: block; font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+.msg.user { justify-self: end; max-width: 88%; background: var(--step-bg); border-bottom-right-radius: 6px; box-shadow: var(--shadow); }
+.msg.bot { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 6px; box-shadow: var(--shadow); padding: 18px; }
+.bot-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bot-head .who { margin: 0; }
+.tag { font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--tint); color: var(--leaf); border: 1px solid var(--line); }
+.bot-body { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 18px; align-items: center; margin-top: 12px; }
+@media (max-width: 420px) { .bot-body { grid-template-columns: minmax(0, 1fr); } }
+.gauge { margin: 0; text-align: center; }
+.gauge svg { width: 100%; height: auto; display: block; }
+.g-track, .g-fill { fill: none; stroke-width: 12; stroke-linecap: round; }
+.g-track { stroke: var(--line); }
+.g-fill { stroke: #3f8fd8; stroke-dasharray: 43.7 100; animation: gauge 1.6s ease-out 0.3s backwards; }
+@keyframes gauge { from { stroke-dasharray: 0 100; } }
+.g-val { font-family: var(--f-mono); font-size: 1.5rem; line-height: 1; margin-top: -4px; }
+.g-lab { font-size: 0.78rem; color: var(--muted); }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 0.95rem; }
+.facts li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.facts li span { color: var(--muted); }
+.facts li b { font-weight: 600; text-align: right; }
+.bot-foot { margin-top: 12px; color: var(--muted); font-size: 0.95rem; }
+
+/* annotated training code */
+.code-rows { display: grid; gap: 26px; margin-top: 36px; counter-reset: c; }
+.code-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; counter-increment: c; }
+@media (min-width: 900px) { .code-row { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 28px; align-items: start; } }
+.code { margin: 0; background: #0e1b19; color: #d9eee4; border: 1px solid #23403a; border-radius: 14px; padding: 18px 20px; overflow-x: auto; font-family: var(--f-mono); font-size: 0.84rem; line-height: 1.7; tab-size: 4; }
+.code code { font-family: inherit; }
+.code .k { color: #ff9f7a; } .code .s { color: #9be0b0; } .code .c { color: #7f9a92; } .code .f { color: #8fd0f0; } .code .n { color: #ffd166; }
+.code-note h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.code-note h3::before { content: counter(c); flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--step-bg); font-family: var(--f-mono); font-size: 0.9rem; font-weight: 400; }
+.code-note p { color: var(--muted); font-size: 0.98rem; line-height: 1.6; }
+.code-note code { font-family: var(--f-mono); font-size: 0.86em; background: var(--tint); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; }
+.code-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 20px; }
+.code-head .btn { color: var(--ink); border-color: var(--ink); }
+
+.steps { list-style: none; counter-reset: s; margin: 40px 0 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.steps li { counter-increment: s; padding: 26px; display: grid; gap: 14px; align-content: start; }
+.steps li::before { content: counter(s); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--step-bg); color: var(--ink); font-family: var(--f-mono); font-size: 1.1rem; }
+.steps h3 { margin-bottom: 8px; }
+.steps p { color: var(--muted); font-size: 0.98rem; line-height: 1.6; }
+.steps code { font-family: var(--f-mono); font-size: 0.86em; background: var(--tint); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; }
+
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 36px; }
+.fig { padding: 24px; }
+.fig .v { font-family: var(--f-mono); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fig .k { font-size: 0.93rem; color: var(--muted); margin-top: 8px; }
+.table-card { margin-top: 20px; padding: 8px 24px 12px; overflow-x: auto; }
+.table-card:hover { transform: none; }
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 0.98rem; }
+th, td { text-align: left; padding: 12px 14px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--leaf); font-weight: 500; }
+td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { margin-top: 18px; color: var(--muted); font-size: 0.95rem; max-width: 46em; }
+
+.gallery { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 36px; }
+@media (min-width: 860px) { .gallery { grid-template-columns: minmax(0, 3fr) minmax(0, 8fr); align-items: start; } }
+.gallery .stack { display: grid; gap: 28px; }
+.gallery .side { max-width: 360px; margin: 0; }
+.gallery figure { margin: 0; }
+.hint { margin-top: 14px; font-size: 0.88rem; color: var(--muted); }
+
+.tech { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-top: 36px; }
+.tech div { padding: 24px; }
+.tech b { display: block; font-family: var(--f-display); font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; }
+.tech span { color: var(--muted); font-size: 0.95rem; }
+
+.team { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 36px; }
+.member { padding: 28px; display: grid; gap: 20px; align-content: start; }
+.avatar { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 1.45rem; transition: transform 0.3s ease; }
+.member:hover .avatar { transform: rotate(-8deg) scale(1.08); }
+.a1 { background: linear-gradient(135deg, #ffd25a, #ff8a1c); color: #3a1d00; }
+.a2 { background: linear-gradient(135deg, #8de0ac, #1f9a62); color: #04281a; }
+.a3 { background: linear-gradient(135deg, #94d6f6, #3f8fd8); color: #04223a; }
+.member h3 { font-size: 1.45rem; }
+.member p { color: var(--muted); font-size: 0.95rem; line-height: 1.5; margin-top: 4px; }
+
+.foot-trees { height: clamp(56px, 8vw, 90px); background: var(--forest); -webkit-mask-image: var(--tile); mask-image: var(--tile); -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x; -webkit-mask-position: left bottom; mask-position: left bottom; -webkit-mask-size: auto 100%; mask-size: auto 100%; }
+.foot-in { background: var(--forest); color: var(--on-forest); padding-block: 8px 44px; }
+.foot-row { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; font-size: 0.93rem; }
+.foot-row a { text-underline-offset: 3px; }
+
+.lightbox { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: rgba(5, 12, 20, 0.88); cursor: zoom-out; }
+.lightbox img { max-width: 94vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); }
+.lightbox span { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; color: #cfe0e8; font-size: 0.9rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .cloud, .bird { transform: translateX(var(--rest)); }
+  .leaf { transform: translate(0, var(--rest-y)); }
+}
+</style>
+
+<div class="scene" aria-hidden="true">
+  <svg width="0" height="0" style="position:absolute" focusable="false">
+    <defs>
+      <g id="cloud-shape" fill="currentColor">
+        <circle cx="60" cy="70" r="30"/><circle cx="105" cy="48" r="38"/><circle cx="152" cy="64" r="32"/><circle cx="185" cy="76" r="22"/>
+        <rect x="32" y="70" width="176" height="30" rx="15"/>
+      </g>
+      <g id="leaf-shape"><path d="M3 21C3 9 10 3 21 3C21 14 15 21 3 21Z" fill="currentColor"/><path d="M3 21L15 9" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" fill="none"/></g>
+    </defs>
+  </svg>
+  <div class="sky-a"></div>
+  <div class="sky-b"></div>
+  <div class="sun"><span class="rays"></span></div>
+
+  <svg class="cloud" viewBox="0 0 220 110" style="--t:7%; --w:300px; --dur:110s; --delay:-30s; --rest:18vw"><use href="#cloud-shape"/></svg>
+  <svg class="cloud" viewBox="0 0 220 110" style="--t:21%; --w:200px; --dur:85s; --delay:-65s; --rest:62vw"><use href="#cloud-shape"/></svg>
+  <svg class="cloud" viewBox="0 0 220 110" style="--t:38%; --w:380px; --dur:140s; --delay:-90s; --rest:40vw"><use href="#cloud-shape"/></svg>
+  <svg class="cloud" viewBox="0 0 220 110" style="--t:12%; --w:150px; --dur:70s; --delay:-10s; --rest:80vw"><use href="#cloud-shape"/></svg>
+  <svg class="cloud" viewBox="0 0 220 110" style="--t:52%; --w:240px; --dur:100s; --delay:-50s; --rest:6vw"><use href="#cloud-shape"/></svg>
+
+  <svg class="bird" viewBox="0 0 120 50" style="--t:17%; --dur:75s; --delay:-24s; --rest:52vw"><path d="M2 14Q10 4 18 14Q26 4 34 14"/><path d="M46 30Q52 23 58 30Q64 23 70 30"/><path d="M76 10Q84 1 92 10Q100 1 108 10"/></svg>
+  <svg class="bird" viewBox="0 0 120 50" style="--t:30%; --dur:95s; --delay:-70s; --rest:25vw"><path d="M10 18Q17 10 24 18Q31 10 38 18"/><path d="M58 8Q64 1 70 8Q76 1 82 8"/></svg>
+
+  <div class="land">
+    <svg class="hills far" viewBox="0 0 1440 220" preserveAspectRatio="none"><path d="M0 120C200 60 380 80 560 110C760 145 960 60 1160 80C1300 94 1380 110 1440 100L1440 220L0 220Z"/></svg>
+    <div class="trees"></div>
+    <svg class="hills mid" viewBox="0 0 1440 220" preserveAspectRatio="none"><path d="M0 160C180 120 360 130 520 150C720 176 900 120 1100 130C1280 140 1380 160 1440 150L1440 220L0 220Z"/></svg>
+    <svg class="hills near" viewBox="0 0 1440 220" preserveAspectRatio="none"><path d="M0 192C240 162 460 178 700 190C940 202 1160 172 1440 188L1440 220L0 220Z"/></svg>
+  </div>
+
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:8%; --s:22px; --dur:30s; --delay:-6s; --rest-y:20vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="3"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:21%; --s:18px; --dur:24s; --delay:-18s; --rest-y:55vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="2.6"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:36%; --s:26px; --dur:34s; --delay:-12s; --rest-y:38vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="3.2"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:52%; --s:20px; --dur:27s; --delay:-24s; --rest-y:70vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="2.8"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:67%; --s:24px; --dur:32s; --delay:-2s; --rest-y:15vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="3"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:80%; --s:18px; --dur:22s; --delay:-14s; --rest-y:48vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="2.6"/></svg>
+  <svg class="leaf" viewBox="0 0 24 24" style="--x:92%; --s:22px; --dur:36s; --delay:-30s; --rest-y:62vh"><use class="lf" href="#leaf-shape"/><circle class="ff" cx="12" cy="12" r="3"/></svg>
+</div>
+
+<div class="progress" aria-hidden="true"></div>
+
+<div class="page">
+  <header class="nav">
+    <div class="wrap nav-row">
+      <a class="brand" href="#top-of-page">WeatherGPT</a>
+      <nav aria-label="Sections">
+        <a href="#about">About</a>
+        <a href="#how">How it works</a>
+        <a href="#code">Code</a>
+        <a href="#results">Results</a>
+        <a href="#screens">Screenshots</a>
+        <a href="#team">Team</a>
+      </nav>
+      <a class="btn primary sm" href="https://ml-train-weathergpt.streamlit.app/" target="_blank" rel="noopener">Open app</a>
+    </div>
+  </header>
+
+  <main id="top-of-page">
+    <div class="wrap hero">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow">B.Tech CSE · AI &amp; ML project</p>
+          <h1>WeatherGPT</h1>
+          <p class="lede">A weather assistant that runs completely offline. Ask about rain, temperature or conditions for any city, and get an answer from machine learning models trained on historical climate data.</p>
+          <div class="pills">
+            <span class="pill">100% offline</span>
+            <span class="pill">No API keys</span>
+            <span class="pill">Random Forest models</span>
+          </div>
+          <div class="cta">
+            <a class="btn primary" href="https://ml-train-weathergpt.streamlit.app/" target="_blank" rel="noopener">Open the live app</a>
+            <a class="btn ghost" href="https://github.com/Gulshan-Kishore/ML-Train-WeatherGPT" target="_blank" rel="noopener">View the code</a>
+          </div>
+          <p class="readout" aria-label="Sample reply from the app">
+            <span>Sample reply · Delhi</span>
+            <span>Rain probability <b>43.7%</b></span>
+            <span>Forecast <b>No rain expected</b> · Condition <b>Sunny</b></span>
+          </p>
+        </div>
+        <figure class="shot">
+          <img src="img/full.jpg" width="1800" height="952" alt="The WeatherGPT app: a city sidebar on the left and a chat answering 'Will it rain tomorrow in Delhi?' with rain probability and forecast.">
+        </figure>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <section class="panel reveal" id="about">
+        <div class="split">
+          <div>
+            <p class="eyebrow">The project</p>
+            <h2>What it does</h2>
+          </div>
+          <div class="prose">
+            <p><strong>WeatherGPT is a chat-style weather assistant.</strong> Type a city and a question such as "Will it rain tomorrow in Delhi?" and it replies with a weather card showing the current reading, the chance of rain, the forecast and a short summary.</p>
+            <p><strong>It needs no weather API.</strong> There are no API keys, no subscriptions and no network calls when it answers. The models are trained ahead of time on historical observations and run locally, so the app works the same everywhere.</p>
+            <p>Along with the chat, the app has a city picker with quick buttons for Mumbai, Delhi, Bangalore, London, New York and Tokyo, an atmospheric simulator for trying your own readings, and a model performance panel that shows how well the models score.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel reveal" id="ask">
+        <div class="split">
+          <div>
+            <p class="eyebrow">Try it</p>
+            <h2>What you can ask</h2>
+            <div class="chips" aria-label="Sample questions">
+              <span class="chip">What is the temperature?</span>
+              <span class="chip">Will it rain today?</span>
+              <span class="chip">Show the forecast</span>
+              <span class="chip">Any weather alerts?</span>
+              <span class="chip">How humid is it?</span>
+              <span class="chip">What is the wind speed?</span>
+              <span class="chip">Show model metrics</span>
+              <span class="chip">How it works without API?</span>
+            </div>
+          </div>
+          <figure class="art-wrap">
+            <div class="art" role="img" aria-label="Illustration of a chat: the question 'Will it rain tomorrow in Delhi?' and WeatherGPT's reply showing a 43.7 percent chance of rain, no rain expected, and sunny conditions.">
+              <svg class="art-bg" viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <circle class="a-glow" cx="470" cy="120" r="96"/>
+                <circle class="a-sun" cx="470" cy="120" r="48"/>
+                <use class="a-cloud" href="#cloud-shape" transform="translate(30 50) scale(1.1)"/>
+                <use class="a-cloud" href="#cloud-shape" transform="translate(330 230) scale(0.8)"/>
+                <path class="a-h1" d="M0 520C120 470 240 480 340 510C440 540 520 480 600 490L600 700L0 700Z"/>
+                <path class="a-tree" d="M70 470L94 520H46ZM70 495L100 550H40ZM520 458L546 512H494ZM520 486L552 548H488ZM560 490L580 530H540Z"/>
+                <path class="a-h2" d="M0 590C140 550 260 570 360 590C460 610 540 570 600 580L600 700L0 700Z"/>
+              </svg>
+              <div class="chat">
+                <div class="msg user"><span class="who">You</span>Will it rain tomorrow in Delhi?</div>
+                <div class="msg bot">
+                  <div class="bot-head"><span class="who">WeatherGPT</span><span class="tag">Offline ML</span></div>
+                  <div class="bot-body">
+                    <div class="gauge">
+                      <svg viewBox="0 0 140 84" aria-hidden="true">
+                        <path class="g-track" d="M10 74A60 60 0 0 1 130 74" pathLength="100"/>
+                        <path class="g-fill" d="M10 74A60 60 0 0 1 130 74" pathLength="100"/>
+                      </svg>
+                      <div class="g-val">43.7%</div>
+                      <div class="g-lab">chance of rain</div>
+                    </div>
+                    <ul class="facts">
+                      <li><span>Current rain</span><b>0.0 mm</b></li>
+                      <li><span>Forecast</span><b>No rain expected</b></li>
+                      <li><span>Condition</span><b>Sunny</b></li>
+                    </ul>
+                  </div>
+                  <p class="bot-foot">Pleasant conditions expected.</p>
+                </div>
+              </div>
+            </div>
+            <figcaption>Illustration of a real reply from the app (Delhi sample).</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel reveal" id="how">
+        <p class="eyebrow">Under the hood</p>
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li class="card reveal">
+            <div>
+              <h3>You ask in plain language</h3>
+              <p>A built-in language parser reads your message and pulls out the city and any readings you typed, such as temperature, humidity or pressure.</p>
+            </div>
+          </li>
+          <li class="card reveal">
+            <div>
+              <h3>The app builds features</h3>
+              <p>Dates are encoded as cycles so December sits next to January. Physics-inspired features are added too, such as the daily temperature range and how far pressure is from the standard <code>1013.25 hPa</code>.</p>
+            </div>
+          </li>
+          <li class="card reveal">
+            <div>
+              <h3>Three Random Forest models predict</h3>
+              <p>A regressor estimates next-day temperature. One classifier predicts whether it will rain tomorrow. A second classifier picks the weather state: Sunny, Cloudy, Rainy or Foggy.</p>
+            </div>
+          </li>
+          <li class="card reveal">
+            <div>
+              <h3>You get a weather card</h3>
+              <p>The Streamlit chat shows the result with the model's confidence, so you can see how sure it is as well as what it predicts.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel reveal" id="code">
+        <div class="code-head">
+          <div>
+            <p class="eyebrow">The model</p>
+            <h2>The training code</h2>
+            <p class="note">A simplified walkthrough of <code style="font-family:var(--f-mono)">train.py</code>. The full file in the repo also builds the features, saves a metrics file and prints a confusion matrix for rain.</p>
+          </div>
+          <a class="btn ghost" href="https://github.com/Gulshan-Kishore/ML-Train-WeatherGPT/blob/main/train.py" target="_blank" rel="noopener">Read the full train.py</a>
+        </div>
+
+        <div class="code-rows">
+          <div class="code-row">
+<pre class="code"><code><span class="k">import</span> joblib
+<span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> RandomForestRegressor, RandomForestClassifier
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> train_test_split
+
+df = pd.<span class="f">read_csv</span>(<span class="s">"data/weather_historical.csv"</span>)   <span class="c"># about 5,470 daily rows</span>
+X, y_temp, y_rain, y_cond = <span class="f">make_features</span>(df)      <span class="c"># stand-in for src/features.py</span>
+
+X_tr, X_te, yt_tr, yt_te, yr_tr, yr_te, yc_tr, yc_te = <span class="f">train_test_split</span>(
+    X, y_temp, y_rain, y_cond,
+    test_size=<span class="n">0.20</span>, random_state=<span class="n">42</span>, stratify=y_rain)</code></pre>
+            <div class="code-note">
+              <h3>Load and split the data</h3>
+              <p>The models learn from daily weather records. 80% are used for training and 20% (1,094 days) are kept back for testing. <code>stratify</code> keeps the share of rainy days the same in both parts.</p>
+            </div>
+          </div>
+
+          <div class="code-row">
+<pre class="code"><code>temp_model = <span class="f">RandomForestRegressor</span>(max_depth=<span class="n">12</span>)    <span class="c"># next-day temperature</span>
+rain_model = <span class="f">RandomForestClassifier</span>(max_depth=<span class="n">10</span>)   <span class="c"># rain tomorrow: yes or no</span>
+cond_model = <span class="f">RandomForestClassifier</span>(max_depth=<span class="n">10</span>)   <span class="c"># Sunny, Cloudy, Rainy, Foggy</span>
+
+temp_model.<span class="f">fit</span>(X_tr, yt_tr)
+rain_model.<span class="f">fit</span>(X_tr, yr_tr)
+cond_model.<span class="f">fit</span>(X_tr, yc_tr)</code></pre>
+            <div class="code-note">
+              <h3>Train three Random Forests</h3>
+              <p>A Random Forest is many decision trees that vote together. There is one forest for each job: a number (temperature) and two labels (rain, weather state). <code>max_depth</code> limits how deep each tree grows so it does not memorise the training data.</p>
+            </div>
+          </div>
+
+          <div class="code-row">
+<pre class="code"><code><span class="k">from</span> sklearn.metrics <span class="k">import</span> mean_absolute_error, r2_score, accuracy_score, roc_auc_score
+
+pred_t = temp_model.<span class="f">predict</span>(X_te)
+<span class="f">print</span>(<span class="s">"MAE"</span>, <span class="f">mean_absolute_error</span>(yt_te, pred_t))        <span class="c"># 0.96 °C</span>
+<span class="f">print</span>(<span class="s">"R²"</span>,  <span class="f">r2_score</span>(yt_te, pred_t))                  <span class="c"># 0.9830</span>
+
+<span class="f">print</span>(<span class="s">"Rain accuracy"</span>, <span class="f">accuracy_score</span>(yr_te, rain_model.<span class="f">predict</span>(X_te)))   <span class="c"># 73.31%</span>
+<span class="f">print</span>(<span class="s">"Rain ROC-AUC"</span>,  <span class="f">roc_auc_score</span>(yr_te, rain_model.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))  <span class="c"># 0.7865</span>
+<span class="f">print</span>(<span class="s">"State accuracy"</span>, <span class="f">accuracy_score</span>(yc_te, cond_model.<span class="f">predict</span>(X_te)))  <span class="c"># 64.99%</span></code></pre>
+            <div class="code-note">
+              <h3>Test on days it has never seen</h3>
+              <p>Scores come only from the held-out 20%, so they show how the models do on new days. Temperature is off by under 1 °C on average, and rain is right about 73% of the time.</p>
+            </div>
+          </div>
+
+          <div class="code-row">
+<pre class="code"><code>joblib.<span class="f">dump</span>({
+    <span class="s">"temp"</span>: temp_model,
+    <span class="s">"rain"</span>: rain_model,
+    <span class="s">"condition"</span>: cond_model,
+    <span class="s">"features"</span>: <span class="f">list</span>(X.columns),
+}, <span class="s">"models/weather_model.pkl"</span>)</code></pre>
+            <div class="code-note">
+              <h3>Save it for offline use</h3>
+              <p>The trained models are written to one file. The Streamlit app loads that file when it starts, so every answer is computed on the spot with no weather API.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel reveal" id="results">
+        <div class="split">
+          <div>
+            <p class="eyebrow">Data and accuracy</p>
+            <h2>Results</h2>
+          </div>
+          <div class="prose">
+            <p>The models learn from about 5,470 daily observations covering 60+ city climate profiles. The data is split 80/20, and the scores below come from 1,094 days the models never saw during training.</p>
+          </div>
+        </div>
+        <div class="figures">
+          <div class="fig card reveal"><div class="v" data-to="0.983" data-dec="3" data-suffix="">0.983</div><div class="k">R² for next-day temperature</div></div>
+          <div class="fig card reveal"><div class="v" data-to="0.96" data-dec="2" data-suffix=" °C">0.96 °C</div><div class="k">Mean absolute error, temperature</div></div>
+          <div class="fig card reveal"><div class="v" data-to="73.3" data-dec="1" data-suffix="%">73.3%</div><div class="k">Accuracy, rain tomorrow</div></div>
+          <div class="fig card reveal"><div class="v" data-to="65.0" data-dec="1" data-suffix="%">65.0%</div><div class="k">Accuracy, weather state</div></div>
+        </div>
+        <div class="table-card card">
+          <table>
+            <thead><tr><th>Task</th><th>Model</th><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td rowspan="3">Next-day temperature</td><td rowspan="3">Random Forest regressor</td><td>R²</td><td class="n">0.9830</td></tr>
+              <tr><td>MAE</td><td class="n">0.96 °C</td></tr>
+              <tr><td>RMSE</td><td class="n">1.22 °C</td></tr>
+              <tr><td rowspan="5">Rain tomorrow</td><td rowspan="5">Random Forest classifier</td><td>Accuracy</td><td class="n">73.31%</td></tr>
+              <tr><td>Precision</td><td class="n">0.7785</td></tr>
+              <tr><td>Recall</td><td class="n">0.5162</td></tr>
+              <tr><td>F1 score</td><td class="n">0.6208</td></tr>
+              <tr><td>ROC-AUC</td><td class="n">0.7865</td></tr>
+              <tr><td>Weather state</td><td>Random Forest classifier</td><td>Accuracy</td><td class="n">64.99%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Temperature is predicted very closely. Rain is harder: recall of 0.52 means the model finds about half of the rainy days, which is the main area to improve with more data.</p>
+      </section>
+
+      <section class="panel reveal" id="screens">
+        <p class="eyebrow">Inside the app</p>
+        <h2>Screenshots</h2>
+        <div class="gallery">
+          <figure class="side">
+            <div class="shot"><img src="img/sidebar.jpg" width="600" height="1780" alt="The app sidebar: offline model badge, city name box, Get Weather button, six quick city buttons, Atmospheric Simulator and Model Performance panels."></div>
+            <figcaption>Sidebar with the offline badge, city search, quick cities and the simulator and performance panels.</figcaption>
+          </figure>
+          <div class="stack">
+            <figure>
+              <div class="shot"><img src="img/chat.jpg" width="1400" height="393" alt="The question 'Will it rain tomorrow in Delhi?' and the reply card showing current rain 0.0 mm, rain probability 43.7%, forecast no rain expected and current condition sunny."></div>
+              <figcaption>Ask a question and get a weather card with the current reading, rain probability and forecast.</figcaption>
+            </figure>
+            <figure>
+              <div class="shot"><img src="img/questions.jpg" width="1400" height="184" alt="Eight sample question buttons under the heading Try asking."></div>
+              <figcaption>One-tap sample questions for temperature, rain, forecast, alerts, humidity, wind and model metrics.</figcaption>
+            </figure>
+          </div>
+        </div>
+        <p class="hint">Tap any screenshot to enlarge it.</p>
+      </section>
+
+      <section class="panel reveal" id="tech">
+        <p class="eyebrow">Built with</p>
+        <h2>Tech stack</h2>
+        <div class="tech">
+          <div class="card reveal"><b>Python 3.9+</b><span>All training, feature building and prediction code.</span></div>
+          <div class="card reveal"><b>scikit-learn</b><span>Random Forest regressor and classifiers.</span></div>
+          <div class="card reveal"><b>joblib</b><span>Saves the trained models so the app loads them instantly.</span></div>
+          <div class="card reveal"><b>Streamlit</b><span>The chat interface, weather cards and simulator, hosted on Streamlit Cloud.</span></div>
+        </div>
+      </section>
+
+      <section class="panel reveal" id="team">
+        <p class="eyebrow">Developed by</p>
+        <h2>The team</h2>
+        <p class="note" style="max-width:40em">Three B.Tech Computer Science and Engineering students specialising in AI and Machine Learning.</p>
+        <div class="team">
+          <article class="member card reveal">
+            <div class="avatar a1" aria-hidden="true">GK</div>
+            <div><h3>Gulshan Kishore</h3><p>B.Tech CSE · AI &amp; ML</p></div>
+          </article>
+          <article class="member card reveal">
+            <div class="avatar a2" aria-hidden="true">RK</div>
+            <div><h3>Ridhi Kumari</h3><p>B.Tech CSE · AI &amp; ML</p></div>
+          </article>
+          <article class="member card reveal">
+            <div class="avatar a3" aria-hidden="true">J</div>
+            <div><h3>Jyuthika</h3><p>B.Tech CSE · AI &amp; ML</p></div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-trees" aria-hidden="true"></div>
+    <div class="foot-in">
+      <div class="wrap foot-row">
+        <span>WeatherGPT · 2026 · Gulshan Kishore, Ridhi Kumari and Jyuthika</span>
+        <span><a href="https://ml-train-weathergpt.streamlit.app/" target="_blank" rel="noopener">Live app</a> · <a href="https://github.com/Gulshan-Kishore/ML-Train-WeatherGPT" target="_blank" rel="noopener">GitHub</a></span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox" hidden><img alt=""><span>Tap anywhere or press Esc to close</span></div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* count-up for the result figures; final values are already in the HTML */
+  var vals = document.querySelectorAll(".fig .v");
+  if (!reduce && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        var el = e.target, to = parseFloat(el.dataset.to), dec = parseInt(el.dataset.dec, 10), suf = el.dataset.suffix || "";
+        var start = null, dur = 1200;
+        function step(t) {
+          if (start === null) start = t;
+          var p = Math.min((t - start) / dur, 1), k = 1 - Math.pow(1 - p, 3);
+          el.textContent = (to * k).toFixed(dec) + suf;
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
+    }, { threshold: 0.6 });
+    vals.forEach(function (v) { io.observe(v); });
+  }
+
+  /* screenshot lightbox */
+  var box = document.getElementById("lightbox"), big = box.querySelector("img");
+  function close() { box.hidden = true; big.removeAttribute("src"); }
+  document.querySelectorAll(".shot img").forEach(function (img) {
+    img.tabIndex = 0;
+    img.setAttribute("role", "button");
+    function open() { big.src = img.currentSrc || img.src; big.alt = img.alt; box.hidden = false; }
+    img.addEventListener("click", open);
+    img.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+  box.addEventListener("click", close);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) close(); });
+})();
+</script>
+
+</body></html>
